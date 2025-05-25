@@ -1,8 +1,8 @@
 var canvas = document.querySelector("canvas");
 var c = canvas.getContext("2d");
 
-canvas.width = 64*16;
-canvas.height = 64*9;
+const CANVASWIDTH = canvas.width = 64*16;
+const CANVASHEIGHT = canvas.height = 64*9;
 
 class Player {
     constructor() {
@@ -15,15 +15,15 @@ class Player {
             y: 0,
         }
 
-        this.width = 100
-        this.height = 100
+        this.width = 90
+        this.height = 90
         this.sides = {
             bottom: this.position.y + this.height
         }
         this.gravity = 1
     }
     draw(){
-        c.fillStyle = 'red'
+        c.fillStyle = 'blue'
         c.fillRect(this.position.x, this.position.y, this.width, this.height)
     }
     update (){
