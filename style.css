@@ -1,26 +1,22 @@
-
-*{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+body {
+    background: black;
 }
-body{
-    font-family: 'Poppins', sans-serif;
-    background-color: #030202;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin : 0;
+#container {
+    position: absolute;
+    width: 800px;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+    font-size: 25px;
 }
-
-canvas{
-    display: block;
-    margin: 0 auto;
-    background-color: #000000;
-    border : 1px solid #000000;
-    background-image: url('img/fondo.png');
-    height: auto;
-    height: auto;
-
+#canvas1 {
+    position: relative;
+    width: 800px;
+    height: 700px;
+}
+#slider {
+    width: 100%;
+}
+p {
+    color: white;
 }
