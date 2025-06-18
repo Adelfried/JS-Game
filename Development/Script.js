@@ -2,24 +2,15 @@ var canvas = document.querySelector("canvas");
 var c = canvas.getContext("2d");
 
 canvas.width = 65*20;
-canvas.height = 64*10;
+canvas.height = 64*10; //Primer etapa: Dibuja el elemento canvas y establece su tamaño con su contexto 2D
 
 class Player {
     constructor() {
-    this.position = {
-        x: 100,
-        y: 100
-        }
-        this.velocity = {
-            x: 0,
-            y: 0,
-        }
-
+    this.position = {x: 200, y: 100}
+        this.velocity = {x: 0, y: 0}
         this.width = 100
         this.height = 100
-        this.sides = {
-            bottom: this.position.y + this.height
-        }
+        this.sides = {bottom: this.position.x + this.position.y + this.height}
         this.gravity = 1
     }
     draw(){
@@ -30,15 +21,27 @@ class Player {
         this.position.x += this.velocity.x
         this.position.y += this.velocity.y
         this.sides.bottom = this.position.y + this.height
-        //above bottom of canvas
-        if (this.sides.bottom + this.velocity.y < canvas.height){
-            this.velocity.y += 0.7
-            
-        }
-        else this.velocity.y = 0
-    }
-}
 
+        // Colisión con el suelo
+        if (this.sides.bottom + this.velocity.y < canvas.height){
+            this.velocity.y += 1;
+        } else {
+            this.velocity.y = 0;
+            this.position.y = canvas.height - this.height;
+        }
+
+        // Colisión con la pared izquierda
+        if (this.position.x < 0) {
+            this.position.x = 0;
+        }
+
+        // Colisión con la pared derecha
+        if (this.position.x + this.width > canvas.width) {
+            this.position.x = canvas.width - this.width;
+        }
+    }
+} 
+// Crear una clase Player que represente al jugador, con propiedades como posición, velocidad, ancho y alto. También incluir un método para dibujar al jugador en el canvas y otro para actualizar su posición y aplicar gravedad.
 const player = new Player ()
 
 const keys = {
@@ -94,5 +97,4 @@ window.addEventListener('keyup', (event) => {
         case 'd':
         keys.d.pressed = false
     }
-
 })
