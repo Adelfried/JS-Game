@@ -18,8 +18,8 @@ body{
 canvas{
     display: block;
     margin: 0 auto;
-    background-color: #000000;
-    border : 1px solid #000000;
+    background-color: wheat;
+    border : 2px solid #000000;
     background-image: url('img/fondo.png');
     height: auto;
     height: auto;
