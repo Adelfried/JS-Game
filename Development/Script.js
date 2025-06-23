@@ -10,26 +10,39 @@ class Player {
         this.velocity = {x: 0, y: 0}
         this.width = 100
         this.height = 100
-        this.sides = {bottom: this.position.x + this.position.y + this.height}
+        this.sides = {bottom: this.position.x + this.height}
         this.gravity = 1
+        this.image = new Image()
+        this.image.src = '../Assets/pato.gif'
+         // Cargar la imagen del jugador
     }
     draw(){
-        c.fillStyle = 'red'
-        c.fillRect(this.position.x, this.position.y, this.width, this.height)
+        c.drawImage(this.image,
+             this.position.x,
+             this.position.y,
+             this.width,
+             this.height)
+        // c.fillStyle = 'red'
+        // c.fillRect(this.position.x, this.position.y, this.width, this.height)
     }
     update (){
         this.position.x += this.velocity.x
         this.position.y += this.velocity.y
         this.sides.bottom = this.position.y + this.height
-
+// EFECTO BOUNCE
         // Colisión con el suelo
         if (this.sides.bottom + this.velocity.y < canvas.height){
             this.velocity.y += 1;
         } else {
-            this.velocity.y = 0;
+            this.velocity.y *= -0.3; // Rebote y pérdida de energía
             this.position.y = canvas.height - this.height;
-        }
 
+            // Si la velocidad es muy pequeña, detenemos el rebote
+            if (Math.abs(this.velocity.y) < 1) {
+                this.velocity.y = 0;
+            }
+        }
+// COLISIONES CON LAS PAREDES
         // Colisión con la pared izquierda
         if (this.position.x < 0) {
             this.position.x = 0;
