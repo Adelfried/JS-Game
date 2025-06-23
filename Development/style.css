@@ -25,3 +25,15 @@ canvas{
     height: auto;
     border-radius: 100px;
 }
+p {
+    color: white;
+    font-size: 20px;
+    text-align: center;
+    margin-top: 20px;
+    font-family: 'Poppins', sans-serif;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
