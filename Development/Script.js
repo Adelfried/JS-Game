@@ -7,8 +7,23 @@ canvas.height = 64*10;
 // Agrega una variable global para la vida del jugador
 let playerLife = 100; // Vida máxima
 const maxPlayerLife = 100;
-let playerLives = 3; // Número de vidas
+let playerLives = 1; // Número de vidas
 let damageCooldown = 0; // Para evitar perder vida varias veces por colisión continua
+let Puntuacionmaxima = []; // Puntuación máxima alcanzada
+
+function agregarPuntuacionMaxima(puntos) {
+    Puntuacionmaxima.push(puntos);
+    // Ordenar la puntuación máxima de mayor a menor
+    Puntuacionmaxima.sort((a, b) => b - a);
+    // Limitar a las 10 puntuaciones más altas
+    if (Puntuacionmaxima.length > 10) {
+        Puntuacionmaxima = Puntuacionmaxima.slice(0, 10);
+    }
+    // Guardar la puntuación máxima en el localStorage
+    localStorage.setItem('puntuacionMaxima', JSON.stringify(Puntuacionmaxima
+    ));
+}
+
 
 //Primer etapa: Dibuja el elemento canvas y establece su tamaño con su contexto 2D
 
@@ -41,7 +56,12 @@ class Danger {
         this.color = 'blue';
         this.speed = Math.random() * 10 + 1; // random speed between 1 and 10
         this.direction = Math.random() < 0.5 ? 1 : -1; // random direction
+        // Limitar la velocidad maxima de la clase danger
+        if (this.speed > 10) {
+        this.speed = 10; // Limita la velocidad máxima a 10
     }
+}
+    
 
     update(canvasWidth) {
         // Move horizontally at random speed
@@ -77,20 +97,23 @@ class Danger {
         player.position.y < this.y + this.size &&
         player.position.y + player.height > this.y
     ) {
-        this.color = 'white';
-        this.color = 'white';
+        if (player.isDodging) {
+            // Si está esquivando, elimina este Danger y suma puntos
+            this.x = -9999; // Lo "elimina" del canvas (puedes usar otro método si prefieres)
+            this.y = -9999;
+            puntos += 10;
+            elementoPuntos.textContent = `Puntos: ${puntos}`;
+        } else {
+            this.color = 'white';
             // Solo quita vida si no está en cooldown
             if (damageCooldown <= 0 && playerLife > 0) {
                 playerLife -= 20; // Daño por colisión
                 if (playerLife < 0) playerLife = 0;
                 damageCooldown = 30; // frames de invulnerabilidad
-                if (keys.q.pressed) {
-                    player.velocity.x *= -4; // Si se presiona 'q', el jugador esquiva
-                    damageCooldown = 600; // Aumenta el cooldown al esquivar
-                }
             }
-        } else {
-            this.color = 'blue';
+        }
+    } else {
+        this.color = 'blue';
     }
 }
 
@@ -120,24 +143,23 @@ class Player {
     }
     // Método para dibujar al jugador en el canvas
     draw(){
-        // Solo dibuja la imagen si está completamente cargada y no está rota
-        if (this.imageLoaded && this.image.complete && this.image.naturalWidth > 0) {
-            c.drawImage(this.image, this.position.x, this.position.y, this.width, this.height)
-        } else {
-            // Si la imagen no está lista, dibuja un rectángulo de respaldo
-            c.fillStyle = 'red'
-            c.fillRect(this.position.x, this.position.y, this.width, this.height)
-        }
-        if (damageCooldown > 0) {
-            c.fillStyle = 'yellow';
-            c.fillRect(this.position.x, this.position.y, this.width, this.height);
-        }
-        else {
-            c.fillStyle = 'red';
-            c.fillRect(this.position.x, this.position.y, this.width, this.height);
-        }
-    
+    // Si está en modo "esquivar" (q), se pone negro
+    if (this.isDodging) {
+        c.fillStyle = 'black';
+        c.fillRect(this.position.x, this.position.y, this.width, this.height);
+    } else if (this.imageLoaded && this.image.complete && this.image.naturalWidth > 0) {
+        c.drawImage(this.image, this.position.x, this.position.y, this.width, this.height);
+    } else {
+        c.fillStyle = 'red';
+        c.fillRect(this.position.x, this.position.y, this.width, this.height);
     }
+    if (damageCooldown > 0 && !this.isDodging) {
+        c.fillStyle = 'yellow';
+        c.globalAlpha = 0.5;
+        c.fillRect(this.position.x, this.position.y, this.width, this.height);
+        c.globalAlpha = 1.0;
+    }
+}
 
     update (){
         this.position.x += this.velocity.x
@@ -180,6 +202,8 @@ for (let i = 0; i < 10; i++) {
     let y = Math.random() * (canvas.height - 40);
     dangers.push(new Danger(x, y, 40));
 }
+player.isDodging = false;
+let dodgeTimeout = null;
 
 const keys = {
     w: {
@@ -271,7 +295,19 @@ function animate(){
             gameOver = true;
         }
     }
-
+        if (puntos >= 135) {
+    c.fillStyle = 'green';
+    c.font = 'bold 60px Arial';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText('¡Victoria!', canvas.width / 2, canvas.height / 2);
+    c.fillStyle = 'white';
+    c.font = 'bold 40px Arial';
+    c.fillText(`Puntuación final: ${puntos}`, canvas.width / 2, canvas.height / 2 + 60);
+    updateRetryButtonVisibility();
+    gameOver = true; // Detiene el juego y muestra el botón de reinicio
+    return;
+    }
     if (gameOver) {
         c.fillStyle = 'red';
         c.font = 'bold 60px Arial';
@@ -282,16 +318,19 @@ function animate(){
         c.fillStyle = 'white';
         c.font = 'bold 40px Arial';
         c.fillText(`puntuación final: ${puntos}`, canvas.width / 2, canvas.height / 2 + 60);
+        updateRetryButtonVisibility(); // Actualizar visibilidad del botón de reinicio
         return;
+    
     }
+    // Actualizar y dibujar peligros
     dangers.forEach(danger => {
         danger.update(canvas.width);
         danger.checkCollision(player);
         danger.draw(c);
     });
 
-    player.draw()
-    player.update()
+    player.draw();
+    player.update();
     drawLifeBar(c); // Dibuja la barra de vida y las vidas
 }// Inicia la animación
 animate ()
@@ -312,9 +351,15 @@ window.addEventListener('keydown', (event) => {
         //derecha
         break
         case 'q':
-        keys.q.pressed = true
-        //esquivar
-        break
+            if (!player.isDodging) {
+                player.isDodging = true;
+                // Desactivar el modo esquivar después de 10ms
+                if (dodgeTimeout) clearTimeout(dodgeTimeout);
+                dodgeTimeout = setTimeout(() => {
+                    player.isDodging = false;
+                }, 100);
+            }
+            break;
     }
 
 })
@@ -335,3 +380,50 @@ window.addEventListener('keyup', (event) => {
         break
     }
 })
+
+// Botón de reinicio del juego
+const retryButton = document.querySelector('button');
+retryButton.addEventListener('click', () => {
+    // Reiniciar variables del juego
+    playerLife = maxPlayerLife;
+    playerLives = 3;
+    gameOver = false;
+    puntos = 0;
+    elementoPuntos.textContent = `Puntos: ${puntos}`;
+    
+    // Reiniciar el jugador
+    player.position.x = 200;
+    player.position.y = 100;
+    player.velocity.x = 0;
+    player.velocity.y = 0;
+
+    dangers.length = 0;
+    for (let i = 0; i < 10; i++) {
+        let x = Math.random() * (canvas.width - 40);
+        let y = Math.random() * (canvas.height - 40);
+        dangers.push(new Danger(x, y, 40));
+    }
+
+});
+// Asegúrate de que el botón esté visible y tenga un estilo adecuado en tu HTML/CSS
+retryButton.style.display = 'block'; // Asegúrate de que el botón esté visible
+retryButton.style.position = 'absolute';
+retryButton.style.top = '100px';
+retryButton.style.left = '961px';
+retryButton.style.padding = '10px 20px';
+retryButton.style.color = '#fff';
+retryButton.style.border = 'none';
+retryButton.style.borderRadius = '5px';
+retryButton.style.cursor = 'pointer';
+retryButton.style.fontSize = '16px';
+retryButton.style.zIndex = '1000'; // Asegúrate de que el botón esté por encima de otros elementos
+// Asegúrate de que el botón esté oculto al inicio del juego
+retryButton.style.display = 'none'; // Ocultar el botón al inicio del juego 
+// Mostrar el botón solo cuando el juego haya terminado
+retryButton.style.display = gameOver ? 'block' : 'none'; // Mostrar el botón solo si el juego ha terminado
+// Actualizar el botón de reinicio cuando el juego termine
+function updateRetryButtonVisibility() {
+    retryButton.style.display = gameOver ? 'block' : 'none'; // Mostrar el botón solo si el juego ha terminado
+}
+// Ocultar el botón de reinicio al inicio del juego
+updateRetryButtonVisibility(); // Llama a esta función al inicio para asegurarte de que el botón esté oculto (no funciona aun XD)
