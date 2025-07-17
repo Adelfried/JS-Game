@@ -40,36 +40,30 @@ class Danger {
     constructor(x, y, size) {
         this.x = x;
         this.y = y;
-        this.size = size;
+        this.size = size; // Usado como radio
         this.image = new Image();
         this.imageLoaded = false;
         this.image.onload = () => { this.imageLoaded = true; };
-        this.image.src = '../Assets/danger.png'; // Imagen normal
-        this.speed = Math.random() * 10 + 1; // random speed between 1 and 10
-        this.direction = Math.random() < 0.5 ? 1 : -1; // random direction
-        // Limitar la velocidad maxima de la clase danger
+        this.image.src = '../Assets/danger.png';
+        this.speed = Math.random() * 10 + 1;
+        this.direction = Math.random() < 0.5 ? 1 : -1;
         if (this.speed > 10) {
-            this.speed = 10; // Limita la velocidad máxima a 10
+            this.speed = 10;
         }
     }
 
     update(canvasWidth) {
-        // Movimiento horizontal randomizado
         this.x += this.speed * this.direction;
-        // Movimiento vertical patron de onda
         this.y += this.speed * Math.sin(Date.now() / 1000 + this.x / 100) * 0.5;
-        // Evita que salga del canvas
-        if (this.y < 0) {
-            this.y *= -1; //Rebota del borde superior
-        }
-        // rebota de los bordes izquierdo y derecho
-        if (this.x < 0 || this.x + this.size > canvasWidth) {
-            this.direction *= -1;
-        }
-        // Rebota arriba y abajo
         if (this.y < 0) {
             this.y *= -1;
-            this.y = 0;
+        }
+        if (this.x - this.size < 0 || this.x + this.size > canvasWidth) {
+            this.direction *= -1;
+        }
+        if (this.y - this.size < 0) {
+            this.y *= -1;
+            this.y = this.size;
         }
         if (this.y + this.size > canvas.height) {
             this.y *= -1;
@@ -77,42 +71,52 @@ class Danger {
         }
     }
 
-checkCollision(player) {
-    // Colision detection between player and danger
-    // Check if player is within the bounds of the danger square
-    if (
-        player.position.x < this.x + this.size &&
-        player.position.x + player.width > this.x &&
-        player.position.y < this.y + this.size &&
-        player.position.y + player.height > this.y
-    ) {
-        if (player.isDodging) {
-            // Si está esquivando, elimina este Danger y suma puntos
-            this.x = true; // Lo "elimina" del canvas (puedes usar otro método si prefieres)
-            this.y = true; // Lo "elimina" del canvas
-            this.size = 0; // Lo "elimina" del canvas
-            puntos += 10;
-            elementoPuntos.textContent = `Puntaje: ${puntos}`; // Actualiza el puntaje en el HTML
-        } else {
-            this.color = 'white';
-            // Solo quita vida si no está en cooldown
-            if (damageCooldown <= 0 && playerLife > 0) {
-                playerLife -= 20; // Daño por colisión
-                if (playerLife < 0) playerLife = 0;
-                damageCooldown = 30; // frames de invulnerabilidad
+    // Colisión circular vs rectangular
+    checkCollision(player) {
+        // Encuentra el punto más cercano del rectángulo al centro del círculo
+        const closestX = Math.max(player.position.x, Math.min(this.x, player.position.x + player.width));
+        const closestY = Math.max(player.position.y, Math.min(this.y, player.position.y + player.height));
+        // Distancia entre el centro del círculo y el punto más cercano
+        const dx = this.x - closestX;
+        const dy = this.y - closestY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < this.size) {
+            if (player.isDodging) {
+                this.x = true;
+                this.y = true;
+                this.size = 0;
+                puntos += 10;
+                elementoPuntos.textContent = `Puntaje: ${puntos}`;
+            } else {
+                this.color = 'white';
+                if (damageCooldown <= 0 && playerLife > 0) {
+                    playerLife -= 20;
+                    if (playerLife < 0) playerLife = 0;
+                    damageCooldown = 30;
+                }
             }
+        } else {
+            this.color = 'blue';
         }
-    } else {
-        this.color = 'blue';
     }
-}
 
     draw(ctx) {
+        ctx.save();
+        // Dibuja círculo con imagen o color
         if (this.imageLoaded && this.image.complete && this.image.naturalWidth > 0) {
-            ctx.drawImage(this.image, this.x, this.y, this.size, this.size);
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.clip();
+            ctx.drawImage(this.image, this.x - this.size, this.y - this.size, this.size * 2, this.size * 2);
+            ctx.restore();
         } else {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
             ctx.fillStyle = this.color || 'blue';
-            ctx.fillRect(this.x, this.y, this.size, this.size);
+            ctx.fill();
+            ctx.restore();
         }
     }
 }
@@ -125,13 +129,13 @@ class Player {
         this.sides = {bottom: this.position.x + this.height}
         this.gravity = 1
         this.image = new Image();
-        this.image.src = '../Assets/pato.gif'; // Imagen normal
+        this.image.src = '../Assets/player.jpg'; // Imagen normal
         this.imageLoaded = false;
         this.image.onload = () => { this.onImageLoad(); };
 
         // Imagen para esquivar
         this.dodgeImage = new Image();
-        this.dodgeImage.src = '../Assets/Pato-Damage.gif'; // Cambia por la ruta de tu imagen de esquivar
+        this.dodgeImage.src = '../Assets/parry.jpg'; // Cambia por la ruta de tu imagen de esquivar
         this.dodgeImageLoaded = false;
         this.dodgeImage.onload = () => { this.dodgeImageLoaded = true; };
     }
