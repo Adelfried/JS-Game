@@ -11,20 +11,6 @@ let playerLife = 100; // Vida máxima
 const maxPlayerLife = 100;
 let playerLives = 1; // Número de vidas
 let damageCooldown = 0; // Para evitar perder vida varias veces por colisión continua
-let Puntuacionmaxima = []; // Puntuación máxima alcanzada
-
-function agregarPuntuacionMaxima(puntos) {
-    Puntuacionmaxima.push(puntos);
-    // Ordenar la puntuación máxima de mayor a menor
-    Puntuacionmaxima.sort((a, b) => b - a);
-    // Limitar a las 10 puntuaciones más altas
-    if (Puntuacionmaxima.length > 10) {
-        Puntuacionmaxima = Puntuacionmaxima.slice(0, 10);
-    }
-    // Guardar la puntuación máxima en el localStorage
-    localStorage.setItem('puntuacionMaxima', JSON.stringify(Puntuacionmaxima
-    ));
-}
 
 
 //Primer etapa: Dibuja el elemento canvas y establece su tamaño con su contexto 2D
@@ -55,30 +41,32 @@ class Danger {
         this.x = x;
         this.y = y;
         this.size = size;
-        this.color = 'blue';
+        this.image = new Image();
+        this.imageLoaded = false;
+        this.image.onload = () => { this.imageLoaded = true; };
+        this.image.src = '../Assets/danger.png'; // Imagen normal
         this.speed = Math.random() * 10 + 1; // random speed between 1 and 10
         this.direction = Math.random() < 0.5 ? 1 : -1; // random direction
         // Limitar la velocidad maxima de la clase danger
         if (this.speed > 10) {
-        this.speed = 10; // Limita la velocidad máxima a 10
+            this.speed = 10; // Limita la velocidad máxima a 10
+        }
     }
-}
-    
 
     update(canvasWidth) {
-        // Move horizontally at random speed
+        // Movimiento horizontal randomizado
         this.x += this.speed * this.direction;
-        // Move vertically in a sine wave pattern
-        this.y += this.speed * Math.sin(Date.now() / 1000 + this.x / 100) * 0.5; // Adjust the multiplier for vertical movement
-        // Keep within canvas bounds
+        // Movimiento vertical patron de onda
+        this.y += this.speed * Math.sin(Date.now() / 1000 + this.x / 100) * 0.5;
+        // Evita que salga del canvas
         if (this.y < 0) {
-            this.y *= -1; // bounce off top edge
+            this.y *= -1; //Rebota del borde superior
         }
-        // Bounce off edges
+        // rebota de los bordes izquierdo y derecho
         if (this.x < 0 || this.x + this.size > canvasWidth) {
             this.direction *= -1;
         }
-        // Bounce off top/bottom edges
+        // Rebota arriba y abajo
         if (this.y < 0) {
             this.y *= -1;
             this.y = 0;
@@ -88,9 +76,8 @@ class Danger {
             this.y = canvas.height - this.size;
         }
     }
-    
 
-    checkCollision(player) {
+checkCollision(player) {
     // Colision detection between player and danger
     // Check if player is within the bounds of the danger square
     if (
@@ -121,17 +108,20 @@ class Danger {
 }
 
     draw(ctx) {
-        
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.size, this.size);
+        if (this.imageLoaded && this.image.complete && this.image.naturalWidth > 0) {
+            ctx.drawImage(this.image, this.x, this.y, this.size, this.size);
+        } else {
+            ctx.fillStyle = this.color || 'blue';
+            ctx.fillRect(this.x, this.y, this.size, this.size);
+        }
     }
 }
 class Player {
     constructor() {
-        this.position = {x: 200, y: 100}
+        this.position = {x: 300, y: 200}
         this.velocity = {x: 0, y: 0}
-        this.width = 100
-        this.height = 100
+        this.width = 90
+        this.height = 90
         this.sides = {bottom: this.position.x + this.height}
         this.gravity = 1
         this.image = new Image();
@@ -150,20 +140,42 @@ class Player {
     }
     // Método para dibujar al jugador en el canvas
     draw(){
-        if (this.isDodging && this.dodgeImageLoaded && this.dodgeImage.complete && this.dodgeImage.naturalWidth > 0) {
-            c.drawImage(this.dodgeImage, this.position.x, this.position.y, this.width, this.height);
-        } else if (this.imageLoaded && this.image.complete && this.image.naturalWidth > 0) {
-            c.drawImage(this.image, this.position.x, this.position.y, this.width, this.height);
+        c.save();
+        if (this.flipped) {
+            // Girar la imagen 180 grados horizontalmente
+            c.translate(this.position.x + this.width / 2, this.position.y + this.height / 2);
+            c.scale(-1, 1);
+            c.translate(-this.width / 2, -this.height / 2);
+            if (this.isDodging && this.dodgeImageLoaded && this.dodgeImage.complete && this.dodgeImage.naturalWidth > 0) {
+                c.drawImage(this.dodgeImage, 0, 0, this.width, this.height);
+            } else if (this.imageLoaded && this.image.complete && this.image.naturalWidth > 0) {
+                c.drawImage(this.image, 0, 0, this.width, this.height);
+            } else {
+                c.fillStyle = 'red';
+                c.fillRect(0, 0, this.width, this.height);
+            }
         } else {
-            c.fillStyle = 'red';
-            c.fillRect(this.position.x, this.position.y, this.width, this.height);
+            // Imagen normal
+            if (this.isDodging && this.dodgeImageLoaded && this.dodgeImage.complete && this.dodgeImage.naturalWidth > 0) {
+                c.drawImage(this.dodgeImage, this.position.x, this.position.y, this.width, this.height);
+            } else if (this.imageLoaded && this.image.complete && this.image.naturalWidth > 0) {
+                c.drawImage(this.image, this.position.x, this.position.y, this.width, this.height);
+            } else {
+                c.fillStyle = 'red';
+                c.fillRect(this.position.x, this.position.y, this.width, this.height);
+            }
         }
         if (damageCooldown > 0 && !this.isDodging) {
-            c.fillStyle = 'yellow';
             c.globalAlpha = 0.5;
-            c.fillRect(this.position.x, this.position.y, this.width, this.height);
+            c.fillStyle = 'yellow';
+            if (this.flipped) {
+                c.fillRect(0, 0, this.width, this.height);
+            } else {
+                c.fillRect(this.position.x, this.position.y, this.width, this.height);
+            }
             c.globalAlpha = 1.0;
         }
+        c.restore();
     }
 
     update (){
@@ -196,9 +208,12 @@ class Player {
     }
 }
 
-// Crear una clase Player que represente al jugador, con propiedades como posición, velocidad, ancho y alto. También incluir un método para dibujar al jugador en el canvas y otro para actualizar su posición y aplicar gravedad.
+// Crear una clase Player que represente al jugador, con propiedades como posición, velocidad, ancho y alto. 
+// También incluir un método para dibujar al jugador en el canvas y otro para actualizar su posición y aplicar gravedad.
 const player = new Player ()
-// Crear una clase Danger que represente los peligros, con propiedades como posición, tamaño, velocidad y dirección. Incluir métodos para actualizar su posición, detectar colisiones con el jugador y dibujar los peligros en el canvas.
+// Crear una clase Danger que represente los peligros, con propiedades como posición, tamaño, velocidad y dirección. I
+// ncluir métodos para actualizar su posición, detectar colisiones con el jugador y dibujar los peligros en el canvas.
+
 // Crear un array de objetos Danger que representen los peligros en el juego, con posiciones aleatorias y tamaños fijos.
 const dangers = [];
 for (let i = 0; i < 10; i++) {
@@ -313,6 +328,33 @@ function animate(){
     gameOver = true; // Detiene el juego y muestra el botón de reinicio
     return;
     }
+    // Si el juego ha terminado, muestra el mensaje de Game Over y la puntuación final
+    // Cuando termina el juego, guarda el récord y actualiza la pantalla
+// --- SISTEMA DE RÉCORD SEGURO ---
+function guardarRecord(puntos) {
+    const recordGuardado = localStorage.getItem('recordMaximo');
+    const recordActual = recordGuardado ? parseInt(recordGuardado) : 0;
+    if (puntos > recordActual) {
+        localStorage.setItem('recordMaximo', puntos);
+    }
+}
+
+function mostrarRecord() {
+    const recordGuardado = localStorage.getItem('recordMaximo');
+    const recordActual = recordGuardado ? parseInt(recordGuardado) : 0;
+    const recordElemento = document.getElementById('record');
+    if (recordElemento) {
+        recordElemento.textContent = `Récord: ${recordActual}`;
+    }
+}
+
+// Llama a mostrarRecord al iniciar el juego
+mostrarRecord();
+function finalizarJuego() {
+    guardarRecord(puntos); // Asegúrate que 'puntos' es tu variable de score
+    mostrarRecord();
+    updateRetryButtonVisibility();
+}
     if (gameOver) {
         c.fillStyle = 'red';
         c.font = 'bold 60px Arial';
@@ -349,10 +391,12 @@ window.addEventListener('keydown', (event) => {
         break
         case 'a':
         keys.a.pressed = true
+        player.flipped = true; // Girar a la izquierda
         //izquierda
         break
         case 'd':
         keys.d.pressed = true
+        player.flipped = false; // Imagen normal
         //derecha
         break
         case 'q':
@@ -400,8 +444,13 @@ retryButton.addEventListener('click', () => {
     player.velocity.x = 0;
     player.velocity.y = 0;
     // Reinicia peligros, etc. (si tienes lógica extra)
+        dangers.length = 0;
+    for (let i = 0; i < 10; i++) {
+        let x = Math.random() * (canvas.width - 40);
+        let y = Math.random() * (canvas.height - 40);
+        dangers.push(new Danger(x, y, 40));
     // NO toca el récord
-});
+}});
 
 // Botón Reiniciar Récord: solo borra el récord
 const resetRecordButton = document.getElementById('resetRecordButton');
@@ -409,21 +458,33 @@ resetRecordButton.addEventListener('click', () => {
     localStorage.removeItem('recordMaximo');
     mostrarRecord();
 });
+// Estilo del botón de reinicio del récord
+resetRecordButton.style.display = 'block'; // Asegúrate de que el botón esté visible
+resetRecordButton.style.position = 'absolute';
+resetRecordButton.style.top = '50px';
+resetRecordButton.style.left = '761px';
+resetRecordButton.style.padding = '10px 20px';
+resetRecordButton.style.color = '#fff';
+resetRecordButton.style.backgroundColor = '#e74c3c'; // Color rojo para el botón de reinicio
+resetRecordButton.style.border = 'none';
+resetRecordButton.style.borderRadius = '5px';
+resetRecordButton.style.cursor = 'pointer';
 
 // Asegúrate de que el botón esté visible y tenga un estilo adecuado en tu HTML
 retryButton.style.display = 'block'; // Asegúrate de que el botón esté visible
 retryButton.style.position = 'absolute';
 retryButton.style.top = '100px';
-retryButton.style.left = '961px';
+retryButton.style.left = '761px';
 retryButton.style.padding = '10px 20px';
 retryButton.style.color = '#fff';
 retryButton.style.border = 'none';
 retryButton.style.borderRadius = '5px';
 retryButton.style.cursor = 'pointer';
 retryButton.style.fontSize = '16px';
-retryButton.style.zIndex = '1000'; // Asegúrate de que el botón esté por encima de otros elementos
+retryButton.style.zIndex = '100'; // Asegúrate de que el botón esté por encima de otros elementos
+
 // Asegúrate de que el botón esté oculto al inicio del juego
-retryButton.style.display = 'none'; // Ocultar el botón al inicio del juego 
+retryButton.style.display = 'block'; // Ocultar el botón al inicio del juego 
 // Mostrar el botón solo cuando el juego haya terminado
 retryButton.style.display = gameOver ? 'block' : 'none'; // Mostrar el botón solo si el juego ha terminado
 // Actualizar el botón de reinicio cuando el juego termine
@@ -434,15 +495,30 @@ function updateRetryButtonVisibility() {
 updateRetryButtonVisibility(); // Llama a esta función al inicio para asegurarte de que el botón esté oculto (no funciona aun XD)
 
 const pasoAudio = new Audio('../Sound/walking-sound.mp3');
-pasoAudio.volume = 0.3; // Opcional: ajusta el volumen
+pasoAudio.volume = 1; // Opcional: ajusta el volumen
+
 
 let pasosTimeout = null;
 
 document.addEventListener('keydown', (event) => {
+    if (event.key === 'w') {
+        // Detiene el sonido de pasos al saltar
+        if (!pasoAudio.paused) {
+            pasoAudio.pause();
+            pasoAudio.currentTime = 0;
+        }
+    }
+    if (event.key === 'q') {
+        // Detiene el sonido de pasos al esquivar
+        if (!pasoAudio.paused) {
+            pasoAudio.pause();
+            pasoAudio.currentTime = 0;
+        }
+    }
     if (event.key === 'a' || event.key === 'd') {
-        clearTimeout(pasosTimeout); // Cancela cualquier timeout previo
+        // Reproduce el sonido de pasos al moverse
         if (pasoAudio.paused) {
-            pasoAudio.currentTime = 0.1;
+            pasoAudio.currentTime = 0.1; // Reinicia el sonido
             pasoAudio.play();
         }
     }
@@ -457,33 +533,4 @@ document.addEventListener('keyup', (event) => {
         }, 200);
     }
 });
-
-// --- SISTEMA DE RÉCORD SEGURO ---
-function guardarRecord(puntos) {
-    const recordGuardado = localStorage.getItem('recordMaximo');
-    const recordActual = recordGuardado ? parseInt(recordGuardado) : 0;
-    if (puntos > recordActual) {
-        localStorage.setItem('recordMaximo', puntos);
-    }
-}
-
-function mostrarRecord() {
-    const recordGuardado = localStorage.getItem('recordMaximo');
-    const recordActual = recordGuardado ? parseInt(recordGuardado) : 0;
-    const recordElemento = document.getElementById('record');
-    if (recordElemento) {
-        recordElemento.textContent = `Récord: ${recordActual}`;
-    }
-}
-
-// Llama a mostrarRecord al iniciar el juego
-mostrarRecord();
-
-// Cuando termina el juego, guarda el récord y actualiza la pantalla
-function finalizarJuego() {
-    guardarRecord(puntos); // Asegúrate que 'puntos' es tu variable de score
-    mostrarRecord();
-    updateRetryButtonVisibility();
-    // ...código de game over...
-}
 
