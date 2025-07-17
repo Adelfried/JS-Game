@@ -1,6 +1,5 @@
-export const name = "Realize";
-
-export function draw (ctx, length, x, y, color) {
+ const name = "Realize";
+function draw (ctx, length, x, y, color) {
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x + length, y);

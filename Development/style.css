@@ -50,3 +50,22 @@ button {
     left: 50%;
     transform: translate(-50%, -50%);
 }
+p#puntos {
+    top: 5%;
+    letter-spacing: 2px;
+    font-style: oblique;
+    font-weight: bold;
+    font-size: 30px;
+    color: rgb(66, 63, 63);
+}
+
+#record{
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    color: #333;
+    text-align: center;
+    font-weight: bold;
+}
