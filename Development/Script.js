@@ -1,5 +1,3 @@
-import './Script2.js'; // Importa el segundo script para que se ejecute después de este
-
 const canvas = document.querySelector("canvas");
 const c = canvas.getContext("2d");
 let gameOver = false;
@@ -23,33 +21,18 @@ let damageCooldown = 0; // Para evitar perder vida varias veces por colisión co
 
 // Cuarto paso: Crear un array de objetos Danger que representen los peligros en el juego, con posiciones aleatorias y tamaños fijos.
 
-// Quinto paso: Implementar un bucle de animación que actualice y dibuje los peligros y al jugador en cada fotograma, y que detecte colisiones entre ellos. 
-// Si el jugador colisiona con un peligro, se debe reducir su tamaño y si es demasiado pequeño, se debe mostrar un mensaje de "Game Over" y detener el juego.
-
-// Sexto paso: Implementar controles para mover al jugador hacia la izquierda y derecha, y saltar con la tecla 'w'. 
-// El jugador debe poder moverse por el canvas y evitar los peligros que se mueven horizontalmente.
-
-// Séptimo paso: Implementar un sistema de colisiones que detecte cuando el jugador colisiona con un peligro y reduzca su tamaño, y si es demasiado pequeño, 
-// se debe mostrar un mensaje de "Game Over" y detener el juego.
-
-// Octavo paso: Implementar un sistema de puntuación que aumente cada vez que el jugador evite un peligro, y que se muestre en la pantalla.
-//  Si el jugador colisiona con un peligro, se debe reiniciar la puntuación a cero.
-
-// Noveno paso: Implementar un sistema de reinicio del juego que permita al jugador reiniciar el juego después de un "Game Over".
 class Danger {
     constructor(x, y, size) {
         this.x = x;
         this.y = y;
-        this.size = size; // Usado como radio
+        this.size = size;
+        this.speed = 2 + Math.random() * 2;
+        this.direction = Math.random() < 0.5 ? 1 : -1;
+        this.color = 'blue';
         this.image = new Image();
+        this.image.src = '../Assets/danger.png'; // Cambia la ruta si tienes una imagen
         this.imageLoaded = false;
         this.image.onload = () => { this.imageLoaded = true; };
-        this.image.src = '../Assets/danger.png';
-        this.speed = Math.random() * 10 + 1;
-        this.direction = Math.random() < 0.5 ? 1 : -1;
-        if (this.speed > 10) {
-            this.speed = 10;
-        }
     }
 
     update(canvasWidth) {
@@ -72,7 +55,7 @@ class Danger {
     }
 
     // Colisión circular vs rectangular
-    checkCollision(player) {
+    checkCollision(player)  {
         // Encuentra el punto más cercano del rectángulo al centro del círculo
         const closestX = Math.max(player.position.x, Math.min(this.x, player.position.x + player.width));
         const closestY = Math.max(player.position.y, Math.min(this.y, player.position.y + player.height));
@@ -83,9 +66,11 @@ class Danger {
 
         if (distance < this.size) {
             if (player.isDodging) {
-                this.x = true;
-                this.y = true;
-                this.size = 0;
+                // Elimina el danger del arreglo
+                const index = dangers.indexOf(this);
+                if (index !== -1) {
+                    dangers.splice(index, 1);
+                }
                 puntos += 10;
                 elementoPuntos.textContent = `Puntaje: ${puntos}`;
             } else {
@@ -380,6 +365,21 @@ function finalizarJuego() {
         danger.draw(c);
     });
 
+    // Verifica si todos los dangers han sido eliminados
+    if (dangers.every(danger => danger.size === 0)) {
+        c.fillStyle = 'green';
+        c.font = 'bold 60px Arial';
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillText('¡Victoria!', canvas.width / 2, canvas.height / 2);
+        c.fillStyle = 'white';
+        c.font = 'bold 40px Arial';
+        c.fillText(`Puntuación final: ${puntos}`, canvas.width / 2, canvas.height / 2 + 60);
+        updateRetryButtonVisibility();
+        gameOver = true;
+        return;
+    }
+
     player.draw();
     player.update();
     drawLifeBar(c); // Dibuja la barra de vida y las vidas
@@ -406,6 +406,9 @@ window.addEventListener('keydown', (event) => {
         case 'q':
             if (!player.isDodging) {
                 player.isDodging = true;
+                // SONIDO DE ESQUIVAR
+                dodgeAudio.currentTime = 0;
+                dodgeAudio.play();
                 // Desactivar el modo esquivar después de 10ms
                 if (dodgeTimeout) clearTimeout(dodgeTimeout);
                 dodgeTimeout = setTimeout(() => {
@@ -463,16 +466,16 @@ resetRecordButton.addEventListener('click', () => {
     mostrarRecord();
 });
 // Estilo del botón de reinicio del récord
-resetRecordButton.style.display = 'block'; // Asegúrate de que el botón esté visible
-resetRecordButton.style.position = 'absolute';
-resetRecordButton.style.top = '50px';
-resetRecordButton.style.left = '761px';
-resetRecordButton.style.padding = '10px 20px';
-resetRecordButton.style.color = '#fff';
-resetRecordButton.style.backgroundColor = '#e74c3c'; // Color rojo para el botón de reinicio
-resetRecordButton.style.border = 'none';
-resetRecordButton.style.borderRadius = '5px';
-resetRecordButton.style.cursor = 'pointer';
+// resetRecordButton.style.display = 'block'; // Asegúrate de que el botón esté visible
+// resetRecordButton.style.position = 'absolute';
+// resetRecordButton.style.top = '50px';
+// resetRecordButton.style.left = '761px';
+// resetRecordButton.style.padding = '10px 20px';
+// resetRecordButton.style.color = '#fff';
+// resetRecordButton.style.backgroundColor = '#e74c3c'; // Color rojo para el botón de reinicio
+// resetRecordButton.style.border = 'none';
+// resetRecordButton.style.borderRadius = '5px';
+// resetRecordButton.style.cursor = 'pointer';
 
 // Asegúrate de que el botón esté visible y tenga un estilo adecuado en tu HTML
 retryButton.style.display = 'block'; // Asegúrate de que el botón esté visible
@@ -537,4 +540,7 @@ document.addEventListener('keyup', (event) => {
         }, 200);
     }
 });
+
+const dodgeAudio = new Audio('../Sound/Parry.mp3');
+dodgeAudio.volume = 0.5; // Ajusta el volumen si lo deseas
 

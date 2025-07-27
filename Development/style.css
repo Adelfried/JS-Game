@@ -5,25 +5,31 @@
     padding: 0;
     box-sizing: border-box;
 }
-body{
+body {
     font-family: 'Poppins', sans-serif;
     background-color: #f0f0f0;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
     min-height: 100vh;
+    min-width: 100vw;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin : 0;
+    overflow: hidden;
 }
-
-canvas{
+canvas {
     display: block;
-    margin: 0 auto;
-    background-color: wheat;
-    border : 2px solid #000000;
-    background-image: url('img/fondo.png');
-    height: auto;
-    height: auto;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(0deg, rgba(97, 230, 232, 1) 0%, rgba(255, 201, 84, 1) 100%);
+    border: 2px solid #000000;
     border-radius: 100px;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    box-sizing: border-box;
 }
 p {
     color: white;
@@ -57,15 +63,31 @@ p#puntos {
     font-weight: bold;
     font-size: 30px;
     color: rgb(66, 63, 63);
+} 
+/* Boton de Resetear */
+#resetRecordButton {
+    transform: rotateZ(25deg); 
+    width: 5cm;
+    height: 1cm;
+    top: 6%;
+    left: 86%;
+    color: rgb(255, 196, 87);
+    background: #2A7B9B;
+    background: linear-gradient(22deg, rgba(42, 123, 155, 1) 0%, rgba(93, 186, 132, 1) 50%, rgba(237, 221, 83, 1) 100%); /* Rojo */
+    font: oblique small-caps bold 16px/1.5 Poppins, sans-serif;
+    border: 2.50px rgb(105, 104, 104) solid;
+    border-radius: 5px;
+    cursor: pointer;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    padding: 0;
+    opacity: 0.7;
 }
 
-#record{
-    position: absolute;
-    top: 10%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 20px;
-    color: #333;
-    text-align: center;
-    font-weight: bold;
+/* Seleccion en el boton */
+#resetRecordButton:hover {
+    background: #1F5A7B;
+    background: linear-gradient(22deg, rgba(31, 90, 123, 1) 0%, rgba(70, 140, 99, 1) 50%, rgba(197, 181, 63, 1) 100%);
+    color: #fff;
+    scale: 1.05;
+    box-shadow: #000000 0px 0px 10px;
 }
