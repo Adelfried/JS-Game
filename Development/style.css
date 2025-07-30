@@ -37,7 +37,7 @@ p {
     left: 50%;
     transform: translate(-50%, -50%);
 }
-button {
+#resetRecordButton {
     background-color: #4CAF50; /* Verde */
     color: white;
     padding: 10px 20px;
@@ -46,16 +46,19 @@ button {
     cursor: pointer;
     font-size: 16px;
     position: absolute;
-    top: 20%;
-    left: 50%;
+    top: 10%;
+    left: 40%;
     transform: translate(-50%, -50%);
+}
+#resetRecordButton:hover {
+    background-color: #3a853d; /* Verde más oscuro al pasar el mouse */
 }
 p#puntos {
     top: 5%;
     letter-spacing: 2px;
     font-style: oblique;
     font-weight: bold;
-    font-size: 30px;
+    font-size: 50px;
     color: rgb(66, 63, 63);
 }
 
@@ -64,8 +67,26 @@ p#puntos {
     top: 10%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 20px;
+    font-size: 35px;
     color: #333;
     text-align: center;
     font-weight: bold;
+}
+
+#retry {
+    position: absolute;
+    top: 5%;
+    left: 40%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    color: #fff;
+    background-color: #ff1e00; /* Azul */
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#retry:hover {
+    background-color: #ff5811; /* Azul más claro al pasar el mouse */
 }
