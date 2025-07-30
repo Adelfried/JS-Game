@@ -1,5 +1,3 @@
-import './Script2.js'; // Importa el segundo script para que se ejecute después de este
-
 const canvas = document.querySelector("canvas");
 const c = canvas.getContext("2d");
 let gameOver = false;
@@ -23,25 +21,13 @@ let damageCooldown = 0; // Para evitar perder vida varias veces por colisión co
 
 // Cuarto paso: Crear un array de objetos Danger que representen los peligros en el juego, con posiciones aleatorias y tamaños fijos.
 
-// Quinto paso: Implementar un bucle de animación que actualice y dibuje los peligros y al jugador en cada fotograma, y que detecte colisiones entre ellos. 
-// Si el jugador colisiona con un peligro, se debe reducir su tamaño y si es demasiado pequeño, se debe mostrar un mensaje de "Game Over" y detener el juego.
-
-// Sexto paso: Implementar controles para mover al jugador hacia la izquierda y derecha, y saltar con la tecla 'w'. 
-// El jugador debe poder moverse por el canvas y evitar los peligros que se mueven horizontalmente.
-
-// Séptimo paso: Implementar un sistema de colisiones que detecte cuando el jugador colisiona con un peligro y reduzca su tamaño, y si es demasiado pequeño, 
-// se debe mostrar un mensaje de "Game Over" y detener el juego.
-
-// Octavo paso: Implementar un sistema de puntuación que aumente cada vez que el jugador evite un peligro, y que se muestre en la pantalla.
-//  Si el jugador colisiona con un peligro, se debe reiniciar la puntuación a cero.
-
-// Noveno paso: Implementar un sistema de reinicio del juego que permita al jugador reiniciar el juego después de un "Game Over".
 class Danger {
     constructor(x, size) {
         this.x = x;
         this.y = -size; // Empieza arriba del canvas
         this.size = size;
         this.image = new Image();
+        this.image.src = '../Assets/danger.png'; // Cambia la ruta si tienes una imagen
         this.imageLoaded = false;
         this.image.onload = () => { this.imageLoaded = true; };
         this.image.src = '../Assets/image.png';
@@ -396,6 +382,9 @@ window.addEventListener('keydown', (event) => {
         case 'q':
             if (!player.isDodging) {
                 player.isDodging = true;
+                // SONIDO DE ESQUIVAR
+                dodgeAudio.currentTime = 0;
+                dodgeAudio.play();
                 // Desactivar el modo esquivar después de 10ms
                 if (dodgeTimeout) clearTimeout(dodgeTimeout);
                 dodgeTimeout = setTimeout(() => {
@@ -488,4 +477,7 @@ document.addEventListener('keyup', (event) => {
         }, 200);
     }
 });
+
+const dodgeAudio = new Audio('../Sound/Parry.mp3');
+dodgeAudio.volume = 0.5; // Ajusta el volumen si lo deseas
 
