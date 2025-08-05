@@ -9,6 +9,7 @@ let playerLife = 100; // Vida máxima
 const maxPlayerLife = 100;
 let playerLives = 3; // Número de vidas
 let damageCooldown = 0; // Para evitar perder vida varias veces por colisión continua
+let landSoundCooldown = 0; // Tiempo en frames
 
 
 //Primer etapa: Dibuja el elemento canvas y establece su tamaño con su contexto 2D
@@ -19,7 +20,52 @@ let damageCooldown = 0; // Para evitar perder vida varias veces por colisión co
 // Tercer paso: Crear una clase Player que represente al jugador, con propiedades como posición, velocidad, ancho y alto. 
 // También incluir un método para dibujar al jugador en el canvas y otro para actualizar su posición y aplicar gravedad.
 
-// Cuarto paso: Crear un array de objetos Danger que representen los peligros en el juego, con posiciones aleatorias y tamaños fijos.
+// Cuarto paso: Crear un array de objetos Danger que represente los peligros en el juego, con posiciones aleatorias y tamaños fijos.
+class Sprite{
+    const({animations = [], data}) {
+        this.animations = animations;
+        this.animation ='idle'
+        this.frame = {}
+        this.frameIndex = -1;
+        this.data = data;
+    }
+    advance() {
+        if(frame % 8 === 0) {
+            this.framesNames = this.animations[this.animation].frames;
+        }
+        if (this.frameIndex + 1 >= this.framesNames.length){
+            this.frameIndex = 0
+        }else {
+            this.frameIndex++;
+        }
+        this.frame = this.data.frames[this.framesNames[this.frameIndex]].frame
+     }
+}
+
+class Character extends Sprite {
+    constructor(imageURL,x,y,w,h) {
+        this.x = x || 200
+        this.y = y || 200
+        this.w = w || 50
+        this.h = h || 50
+        this.image = new Image();
+        this.image.src = imageURL
+}
+    
+     Dibujar() {
+        ctx.drawImage(
+            this.image,
+            this.frame.x,
+            this.frame.y,
+            this.frame.w,
+            this.frame.h,
+            this.x,
+            this.y,
+            this.w,
+            this.h,
+        )
+    }
+}
 
 class Danger {
     constructor(x, size) {
@@ -46,14 +92,16 @@ class Danger {
 
     checkCollision(player) {
         if (!this.active) return;
-        // Colisión circular vs rectangular
-        const closestX = Math.max(player.position.x, Math.min(this.x, player.position.x + player.width));
-        const closestY = Math.max(player.position.y, Math.min(this.y, player.position.y + player.height));
-        const dx = this.x - closestX;
-        const dy = this.y - closestY;
+        // Colisión circular vs circular (hitbox centrada en la imagen del jugador)
+        const playerCenterX = player.position.x + player.width / 2;
+        const playerCenterY = player.position.y + player.height / 2;
+        const playerRadius = Math.min(player.width, player.height) / 2 * 0.65; // Ajusta el 0.7 para el tamaño de la hitbox
+
+        const dx = this.x - playerCenterX;
+        const dy = this.y - playerCenterY;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < this.size) {
+        if (distance < this.size + playerRadius) {
             if (player.isDodging) {
                 this.active = false;
                 puntos += 10;
@@ -94,8 +142,8 @@ class Player {
     constructor() {
         this.position = {x: 300, y: 200}
         this.velocity = {x: 0, y: 0}
-        this.width = 110
-        this.height = 110
+        this.width = 70
+        this.height = 70
         this.sides = {bottom: this.position.x + this.height}
         this.gravity = 1
         this.image = new Image();
@@ -156,11 +204,16 @@ class Player {
         this.position.x += this.velocity.x
         this.position.y += this.velocity.y
         this.sides.bottom = this.position.y + this.height
-// EFECTO BOUNCE
+        // EFECTO BOUNCE
         // Colisión con el suelo
         if (this.sides.bottom + this.velocity.y < canvas.height){
-            this.velocity.y += 1;
+            this.velocity.y += 0.8;
         } else {
+            if (this.velocity.y !== 0 && landSoundCooldown <= 0) {
+                landAudio.currentTime = 0.150;
+                landAudio.play();
+                landSoundCooldown = 50; // Espera 30 frames (~0.5 segundos si usas 60fps)
+            }
             this.velocity.y *= -0.3; // Rebote y pérdida de energía
             this.position.y = canvas.height - this.height;
 
@@ -169,7 +222,7 @@ class Player {
                 this.velocity.y = 0;
             }
         }
-// COLISIONES CON LAS PAREDES
+    // COLISIONES CON LAS PAREDES
         // Colisión con la pared izquierda
         if (this.position.x < 0) {
             this.position.x = 0;
@@ -358,7 +411,7 @@ function finalizarJuego() {
     player.update();
     drawLifeBar(c); // Dibuja la barra de vida y las vidas
 
-
+    if (landSoundCooldown > 0) landSoundCooldown--;
 }// Inicia la animación
 animate ()
 
@@ -480,4 +533,7 @@ document.addEventListener('keyup', (event) => {
 
 const dodgeAudio = new Audio('../Sound/Parry.mp3');
 dodgeAudio.volume = 0.5; // Ajusta el volumen si lo deseas
+
+const landAudio = new Audio('../Sound/Sonido-caer.mp3');
+landAudio.volume = 0.7; // Ajusta el volumen si lo deseas
 
