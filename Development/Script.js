@@ -21,52 +21,6 @@ let landSoundCooldown = 0; // Tiempo en frames
 // También incluir un método para dibujar al jugador en el canvas y otro para actualizar su posición y aplicar gravedad.
 
 // Cuarto paso: Crear un array de objetos Danger que represente los peligros en el juego, con posiciones aleatorias y tamaños fijos.
-class Sprite{
-    const({animations = [], data}) {
-        this.animations = animations;
-        this.animation ='idle'
-        this.frame = {}
-        this.frameIndex = -1;
-        this.data = data;
-    }
-    advance() {
-        if(frame % 8 === 0) {
-            this.framesNames = this.animations[this.animation].frames;
-        }
-        if (this.frameIndex + 1 >= this.framesNames.length){
-            this.frameIndex = 0
-        }else {
-            this.frameIndex++;
-        }
-        this.frame = this.data.frames[this.framesNames[this.frameIndex]].frame
-     }
-}
-
-class Character extends Sprite {
-    constructor(imageURL,x,y,w,h) {
-        this.x = x || 200
-        this.y = y || 200
-        this.w = w || 50
-        this.h = h || 50
-        this.image = new Image();
-        this.image.src = imageURL
-}
-    
-     Dibujar() {
-        ctx.drawImage(
-            this.image,
-            this.frame.x,
-            this.frame.y,
-            this.frame.w,
-            this.frame.h,
-            this.x,
-            this.y,
-            this.w,
-            this.h,
-        )
-    }
-}
-
 class Danger {
     constructor(x, size) {
         this.x = x;
@@ -147,9 +101,9 @@ class Player {
         this.sides = {bottom: this.position.x + this.height}
         this.gravity = 1
         this.image = new Image();
-        this.image.src = '../Assets/player.jpg'; // Imagen normal
-        this.imageLoaded = false;
-        this.image.onload = () => { this.onImageLoad(); };
+        // this.image.src = '../Assets/player.jpg'; // Imagen normal
+        // this.imageLoaded = false;
+        // this.image.onload = () => { this.onImageLoad(); };
 
         // Imagen para esquivar
         this.dodgeImage = new Image();
@@ -163,8 +117,8 @@ class Player {
     // Método para dibujar al jugador en el canvas
     draw(){
         c.save();
+        // Dibuja primero la imagen normal, el dodge o el cubo rojo
         if (this.flipped) {
-            // Girar la imagen 180 grados horizontalmente
             c.translate(this.position.x + this.width / 2, this.position.y + this.height / 2);
             c.scale(-1, 1);
             c.translate(-this.width / 2, -this.height / 2);
@@ -173,20 +127,32 @@ class Player {
             } else if (this.imageLoaded && this.image.complete && this.image.naturalWidth > 0) {
                 c.drawImage(this.image, 0, 0, this.width, this.height);
             } else {
-                c.fillStyle = 'red';
-                c.fillRect(0, 0, this.width, this.height);
+                // No dibujes nada, deja transparente
+                // c.fillStyle = 'red';
+                // c.fillRect(0, 0, this.width, this.height);
             }
         } else {
-            // Imagen normal
             if (this.isDodging && this.dodgeImageLoaded && this.dodgeImage.complete && this.dodgeImage.naturalWidth > 0) {
                 c.drawImage(this.dodgeImage, this.position.x, this.position.y, this.width, this.height);
             } else if (this.imageLoaded && this.image.complete && this.image.naturalWidth > 0) {
                 c.drawImage(this.image, this.position.x, this.position.y, this.width, this.height);
             } else {
-                c.fillStyle = 'red';
-                c.fillRect(this.position.x, this.position.y, this.width, this.height);
+                // No dibujes nada, deja transparente
+                // c.fillStyle = 'red';
+                // c.fillRect(this.position.x, this.position.y, this.width, this.height);
             }
         }
+
+        // Dibuja la sprite del JSON por encima de todo
+        if (this.spriteImg && this.frame) {
+            c.drawImage(
+                this.spriteImg,
+                this.frame.x, this.frame.y, this.frame.w, this.frame.h,
+                this.position.x, this.position.y, this.width, this.height
+            );
+        }
+
+        // Efecto de daño
         if (damageCooldown > 0 && !this.isDodging) {
             c.globalAlpha = 0.5;
             c.fillStyle = 'yellow';
@@ -394,7 +360,7 @@ function finalizarJuego() {
         c.fillText(`puntuación final: ${puntos}`, canvas.width / 2, canvas.height / 2 + 60);
         finalizarJuego(); // Llama a la función para guardar y mostrar el récord
         return;
-    
+        
     }
     // Actualizar y dibujar peligros
     dangers.forEach(danger => {
@@ -407,6 +373,26 @@ function finalizarJuego() {
         if (!dangers[i].active) dangers.splice(i, 1);
     }
 
+    // Animación de sprites SOLO cuando camina
+if (
+    player.framesNames &&
+    player.spriteData &&
+    player.spriteImg &&
+    (keys.a.pressed || keys.d.pressed)
+) {
+    if (!player.lastFrameChange) player.lastFrameChange = 0;
+    player.lastFrameChange++;
+    if (player.lastFrameChange >= 8) { // Cambia cada 8 frames (~0.13s a 60fps)
+        player.frameIndex = (player.frameIndex + 1) % player.framesNames.length;
+        player.frame = player.spriteData.frames[player.framesNames[player.frameIndex]].frame;
+        player.lastFrameChange = 0;
+    }
+} else if (player.framesNames && player.spriteData && player.spriteImg) {
+    // Si no camina, muestra el primer frame
+    player.frameIndex = 0;
+    player.frame = player.spriteData.frames[player.framesNames[0]].frame;
+}
+
     player.draw();
     player.update();
     drawLifeBar(c); // Dibuja la barra de vida y las vidas
@@ -418,51 +404,77 @@ animate ()
 window.addEventListener('keydown', (event) => {
     switch (event.key) {
         case 'w':
-          if (player.velocity.y === 0)
-            player.velocity.y = -20
-
-        break
+        case 'ArrowUp':
+            if (player.velocity.y === 0)
+                player.velocity.y = -20
+            // Detiene el sonido de pasos al saltar
+            if (!pasoAudio.paused) {
+                pasoAudio.pause();
+                pasoAudio.currentTime = 0;
+            }
+            break
         case 'a':
-        keys.a.pressed = true
-        player.flipped = true; // Girar a la izquierda
-        //izquierda
-        break
+        case 'ArrowLeft':
+            keys.a.pressed = true
+            player.flipped = true; // Girar a la izquierda
+            // Reproduce el sonido de pasos al moverse
+            if (pasoAudio.paused) {
+                pasoAudio.currentTime = 0.1;
+                pasoAudio.play();
+            }
+            break
         case 'd':
-        keys.d.pressed = true
-        player.flipped = false; // Imagen normal
-        //derecha
-        break
+        case 'ArrowRight':
+            keys.d.pressed = true
+            player.flipped = false; // Imagen normal
+            // Reproduce el sonido de pasos al moverse
+            if (pasoAudio.paused) {
+                pasoAudio.currentTime = 0.1;
+                pasoAudio.play();
+            }
+            break
         case 'q':
             if (!player.isDodging) {
                 player.isDodging = true;
-                // SONIDO DE ESQUIVAR
                 dodgeAudio.currentTime = 0;
                 dodgeAudio.play();
-                // Desactivar el modo esquivar después de 10ms
                 if (dodgeTimeout) clearTimeout(dodgeTimeout);
                 dodgeTimeout = setTimeout(() => {
                     player.isDodging = false;
-                }, 1000); // Cambia el tiempo según tu preferencia
+                }, 1000);
+            }
+            // Detiene el sonido de pasos al esquivar
+            if (!pasoAudio.paused) {
+                pasoAudio.pause();
+                pasoAudio.currentTime = 0;
             }
             break;
     }
-
 })
 
 window.addEventListener('keyup', (event) => {
     switch (event.key) {
         case 'a':
-        keys.a.pressed = false
-        //izquierda
-        break
+        case 'ArrowLeft':
+            keys.a.pressed = false
+            // Espera 200ms antes de pausar el sonido
+            pasosTimeout = setTimeout(() => {
+                pasoAudio.pause();
+                pasoAudio.currentTime = 0;
+            }, 200);
+            break
         case 'd':
-        keys.d.pressed = false
-        //derecha
-        break
+        case 'ArrowRight':
+            keys.d.pressed = false
+            // Espera 200ms antes de pausar el sonido
+            pasosTimeout = setTimeout(() => {
+                pasoAudio.pause();
+                pasoAudio.currentTime = 0;
+            }, 200);
+            break
         case 'q':
-        keys.q.pressed = false
-        //esquivar
-        break
+            keys.q.pressed = false
+            break
     }
 })
 
@@ -536,4 +548,35 @@ dodgeAudio.volume = 0.5; // Ajusta el volumen si lo deseas
 
 const landAudio = new Audio('../Sound/Sonido-caer.mp3');
 landAudio.volume = 0.7; // Ajusta el volumen si lo deseas
+landAudio.currentTime = 0.5; // Comienza un poco adelantado para evitar silencio inicial
+
+// Cargar el JSON y la imagen de sprites
+Promise.all([
+    fetch('../Source/Sprites-Json.json').then(r => r.json()),
+    new Promise(resolve => {
+        const img = new Image();
+        img.src = '../Assets/Sheets-pato.png';
+        img.onload = () => resolve(img);
+    })
+]).then(([spriteData, spriteImg]) => {
+    // Guarda los datos en el objeto player
+    player.spriteData = spriteData;
+    player.spriteImg = spriteImg;
+    player.animations = {
+        idle: {
+            frames: [
+                'l0_sprite_1.png',
+                'l0_sprite_2.png',
+                'l0_sprite_3.png',
+                'l0_sprite_4.png',
+                'l0_sprite_5.png',
+                'l0_sprite_6.png'
+            ]
+        }
+    };
+    player.animation = 'idle';
+    player.frameIndex = 0;
+    player.framesNames = player.animations[player.animation].frames;
+    player.frame = player.spriteData.frames[player.framesNames[player.frameIndex]].frame;
+});
 

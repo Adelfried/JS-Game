@@ -79,6 +79,46 @@
 				"w": 33,
 				"h": 33
 			}
+		},
+		"l0_sprite_5.png": {
+			"frame": {
+				"x": 71,
+				"y": 1,
+				"w": 33,
+				"h": 33
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 33,
+				"h": 33
+			},
+			"sourceSize": {
+				"w": 33,
+				"h": 33
+			}
+		},
+		"l0_sprite_6.png": {
+			"frame": {
+				"x": 71,
+				"y": 36,
+				"w": 33,
+				"h": 33
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 33,
+				"h": 33
+			},
+			"sourceSize": {
+				"w": 33,
+				"h": 33
+			}
 		}
 	},
 	"meta": {
@@ -87,7 +127,7 @@
 		"image": "spritesheet.png",
 		"format": "RGBA8888",
 		"size": {
-			"w": 70,
+			"w": 105,
 			"h": 70
 		},
 		"scale": "1"
