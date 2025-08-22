@@ -117,31 +117,6 @@ class Player {
     // Método para dibujar al jugador en el canvas
     draw(){
         c.save();
-        // Dibuja primero la imagen normal, el dodge o el cubo rojo
-        if (this.flipped) {
-            c.translate(this.position.x + this.width / 2, this.position.y + this.height / 2);
-            c.scale(-1, 1);
-            c.translate(-this.width / 2, -this.height / 2);
-            if (this.isDodging && this.dodgeImageLoaded && this.dodgeImage.complete && this.dodgeImage.naturalWidth > 0) {
-                c.drawImage(this.dodgeImage, 0, 0, this.width, this.height);
-            } else if (this.imageLoaded && this.image.complete && this.image.naturalWidth > 0) {
-                c.drawImage(this.image, 0, 0, this.width, this.height);
-            } else {
-                // No dibujes nada, deja transparente
-                // c.fillStyle = 'red';
-                // c.fillRect(0, 0, this.width, this.height);
-            }
-        } else {
-            if (this.isDodging && this.dodgeImageLoaded && this.dodgeImage.complete && this.dodgeImage.naturalWidth > 0) {
-                c.drawImage(this.dodgeImage, this.position.x, this.position.y, this.width, this.height);
-            } else if (this.imageLoaded && this.image.complete && this.image.naturalWidth > 0) {
-                c.drawImage(this.image, this.position.x, this.position.y, this.width, this.height);
-            } else {
-                // No dibujes nada, deja transparente
-                // c.fillStyle = 'red';
-                // c.fillRect(this.position.x, this.position.y, this.width, this.height);
-            }
-        }
 
         // Dibuja la sprite del JSON por encima de todo
         if (this.spriteImg && this.frame) {
@@ -416,7 +391,6 @@ window.addEventListener('keydown', (event) => {
         case 'a':
         case 'ArrowLeft':
             keys.a.pressed = true
-            player.flipped = true; // Girar a la izquierda
             // Reproduce el sonido de pasos al moverse
             if (pasoAudio.paused) {
                 pasoAudio.currentTime = 0.1;
@@ -551,6 +525,8 @@ landAudio.volume = 0.7; // Ajusta el volumen si lo deseas
 landAudio.currentTime = 0.5; // Comienza un poco adelantado para evitar silencio inicial
 
 // Cargar el JSON y la imagen de sprites
+
+
 Promise.all([
     fetch('../Source/Sprites-Json.json').then(r => r.json()),
     new Promise(resolve => {
